@@ -1,0 +1,129 @@
+enable
+configure terminal
+hostname MLS1
+
+! --- VLAN database ---
+vlan 10
+ name IT
+vlan 20
+ name HR
+vlan 30
+ name Sales
+vlan 99
+ name MGMT
+vlan 666
+ name UnusedPorts
+vlan 555
+ name Native-BH
+exit
+
+! --- Unused ports ---
+interface range f0/7 - 24 , g0/1 - 2
+ switchport mode access
+ switchport access vlan 666
+ shutdown
+
+! --- Downlink trunks to access switches ---
+interface range f0/1 - 3
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99,555
+ switchport trunk native vlan 555
+
+! --- EtherChannel (LACP) ---
+interface range f0/5 - 6
+ channel-group 1 mode active
+
+interface port-channel 1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99,555
+ switchport trunk native vlan 555
+ no shutdown
+
+! --- DTP off ---
+interface range f0/1 - 3
+ switchport nonegotiate
+interface port-channel 1
+ switchport nonegotiate
+interface range f0/7 - 24 , g0/1 - 2
+ switchport nonegotiate
+! Packet Tracer enforcement
+interface range f0/1 - 3
+ switchport mode trunk
+interface range f0/7 - 24 , g0/1 - 2
+ switchport mode access
+
+! --- STP root configuration ---
+spanning-tree vlan 10,20,30,666 root primary
+spanning-tree vlan 30,99 root secondary
+
+! --- Enable IP routing ---
+ip routing
+
+! --- SVI + HSRP ---
+interface vlan 10
+ ip address 10.1.10.2 255.255.255.0
+ standby 10 ip 10.1.10.1
+ standby 10 priority 110
+ standby 10 preempt
+ no shut
+
+interface vlan 20
+ ip address 10.1.20.2 255.255.255.0
+ standby 20 ip 10.1.20.1
+ standby 20 priority 110
+ standby 20 preempt
+ no shut
+
+interface vlan 30
+ ip address 10.1.30.2 255.255.255.0
+ standby 30 ip 10.1.30.1
+ standby 30 priority 100
+ standby 30 preempt
+ no shut
+
+interface vlan 99
+ ip address 10.1.99.2 255.255.255.240
+ standby 99 ip 10.1.99.1
+ standby 99 priority 100
+ standby 99 preempt
+ no shut
+
+! --- Uplink to R1 ---
+interface f0/4
+ no switchport
+ ip address 10.1.0.2 255.255.255.252
+ no shutdown
+
+! --- Default route ---
+ip route 0.0.0.0 0.0.0.0 10.1.0.1
+
+! --- DHCP Snooping ---
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,99
+no ip dhcp snooping information option
+interface range f0/5 - 6
+ ip dhcp snooping trust
+ ip dhcp snooping limit rate 100
+interface range f0/1 - 2
+ ip dhcp snooping limit rate 100
+
+! --- DHCP helper addresses ---
+interface vlan 10
+ ip helper-address 10.1.0.1
+interface vlan 20
+ ip helper-address 10.1.0.1
+interface vlan 30
+ ip helper-address 10.1.0.1
+
+! --- SSH ---
+ip domain-name lab.local
+username admin privilege 15 secret admin
+crypto key generate rsa modulus 1024
+ip ssh version 2
+line vty 0 15
+ transport input ssh
+ login local
+
+end

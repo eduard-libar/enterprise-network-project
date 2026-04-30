@@ -1,0 +1,39 @@
+enable
+configure terminal
+hostname R2
+
+! --- Router-on-a-Stick subinterfaces ---
+interface g0/0.110
+ encapsulation dot1Q 110
+ ip address 10.2.110.1 255.255.255.0
+ no shutdown
+
+interface g0/0.120
+ encapsulation dot1Q 120
+ ip address 10.2.120.1 255.255.255.0
+ no shutdown
+
+interface g0/0.555
+ encapsulation dot1Q 555 native
+ ip address 10.2.255.1 255.255.255.0
+ no shutdown
+
+interface g0/0
+ no shutdown
+
+! --- WAN interfaces ---
+interface g0/0/0
+ ip address 10.0.0.10 255.255.255.252
+ no shutdown
+
+interface g0/2
+ ip address 10.0.0.17 255.255.255.252
+ no shutdown
+
+! --- Static routes ---
+ip route 10.1.0.0 255.255.0.0 10.0.0.9
+ip route 10.1.0.0 255.255.0.0 10.0.0.18 2
+ip route 10.3.0.0 255.255.0.0 10.0.0.18
+ip route 10.3.0.0 255.255.0.0 10.0.0.9 2
+
+end

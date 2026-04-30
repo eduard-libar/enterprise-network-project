@@ -1,0 +1,35 @@
+enable
+configure terminal
+hostname SW4
+
+vlan 110
+ name Support
+vlan 120
+ name Sales
+vlan 666
+ name UnusedPorts
+vlan 555
+ name Native-BH
+exit
+
+interface range f0/5 - 24 , g0/1 - 2
+ switchport mode access
+ switchport access vlan 666
+ shutdown
+
+interface f0/2
+ switchport mode access
+ switchport access vlan 110
+
+interface f0/3
+ switchport mode access
+ switchport access vlan 120
+
+interface f0/1
+ switchport mode trunk
+ switchport trunk allowed vlan 110,120,555
+ switchport trunk native vlan 555
+
+spanning-tree portfast default
+
+end

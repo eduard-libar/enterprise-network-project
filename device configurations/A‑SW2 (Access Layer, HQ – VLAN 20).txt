@@ -1,0 +1,63 @@
+enable
+configure terminal
+hostname A-SW2
+
+vlan 10
+ name IT
+vlan 20
+ name HR
+vlan 30
+ name Sales
+vlan 99
+ name MGMT
+vlan 666
+ name UnusedPorts
+vlan 555
+ name Native-BH
+exit
+
+interface range f0/5 - 24 , g0/1 - 2
+ switchport mode access
+ switchport access vlan 666
+ shutdown
+
+interface range f0/1 - 2
+ switchport mode access
+ switchport access vlan 20
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+
+interface range f0/3 - 4
+ switchport mode trunk
+ switchport trunk allowed vlan 10,20,30,99,555
+ switchport trunk native vlan 555
+ ip dhcp snooping trust
+ ip dhcp snooping limit rate 100
+
+interface range f0/1 - 24 , g0/1 - 2
+ switchport nonegotiate
+interface range f0/1 - 2
+ switchport mode access
+interface range f0/3 - 4
+ switchport mode trunk
+interface range f0/5 - 24 , g0/1 - 2
+ switchport mode access
+
+spanning-tree portfast bpduguard default
+
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,99
+no ip dhcp snooping information option
+interface range f0/1 - 2
+ ip dhcp snooping limit rate 10
+
+interface vlan 99
+ description MGMT_Interface
+ ip address 10.1.99.5 255.255.255.240
+ no shutdown
+ip default-gateway 10.1.99.1
+
+end

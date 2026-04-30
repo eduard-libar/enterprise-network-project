@@ -1,0 +1,62 @@
+enable
+configure terminal
+hostname R3
+
+! --- VLANs via HWIC-4ESW module ---
+vlan database
+ vlan 200 name DNS_Server
+ vlan 210 name Web_Server
+ vlan 220 name Email_Server
+ vlan 666 name UnusedPorts
+ exit
+
+! --- Access ports for servers ---
+interface f0/0/0
+ switchport mode access
+ switchport access vlan 200
+
+interface f0/0/1
+ switchport mode access
+ switchport access vlan 210
+
+interface f0/0/2
+ switchport mode access
+ switchport access vlan 220
+
+interface f0/0/3
+ shutdown
+ switchport mode access
+ switchport access vlan 666
+
+! --- STP PortFast for server ports ---
+spanning-tree portfast default
+
+! --- SVI for Inter-VLAN routing ---
+interface vlan 200
+ ip address 10.3.200.1 255.255.255.0
+ no shutdown
+
+interface vlan 210
+ ip address 10.3.210.1 255.255.255.0
+ no shutdown
+
+interface vlan 220
+ ip address 10.3.220.1 255.255.255.0
+ no shutdown
+
+! --- WAN interfaces ---
+interface f0/0
+ ip address 10.0.0.18 255.255.255.252
+ no shutdown
+
+interface f0/1
+ ip address 10.0.0.14 255.255.255.252
+ no shutdown
+
+! --- Static routes ---
+ip route 10.1.0.0 255.255.0.0 10.0.0.13
+ip route 10.1.0.0 255.255.0.0 10.0.0.17 2
+ip route 10.2.0.0 255.255.0.0 10.0.0.17
+ip route 10.2.0.0 255.255.0.0 10.0.0.13 2
+
+end
